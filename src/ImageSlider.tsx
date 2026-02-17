@@ -131,9 +131,17 @@ export function ImageSlider({ images, transitionType = 'slide' }: ImageSliderPro
       {/* AI Caption Overlay */}
       {caption && (
         <div className="ai-caption">
-          <span className="ai-caption-text">
-            {caption}
-          </span>
+          <div className="flex items-center gap-3 ai-caption-text group/caption">
+            <span className="flex-1">
+              {caption}
+            </span>
+            <button 
+              onClick={() => speakText(caption)}
+              className={`p-1.5 rounded-full hover:bg-white/20 transition-smooth ${isSpeaking ? 'animate-pulse text-primary' : 'text-white'}`}
+            >
+              <Volume2 className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       )}
 
@@ -158,7 +166,7 @@ export function ImageSlider({ images, transitionType = 'slide' }: ImageSliderPro
             src={url}
             alt={alt}
             aria-hidden={imageIndex !== index}
-            className={`img-slider-img ${transitionType === 'fade' ? (index === imageIndex ? 'opacity-100' : 'opacity-0') : ''}`}
+            className={`img-slider-img ${transitionType === 'fade' ? (index === imageIndex ? 'opacity-100' : 'opacity-0 pointer-events-none') : ''}`}
             style={transitionType === 'fade' ? { position: 'absolute', inset: 0 } : {}}
           />
         ))}
