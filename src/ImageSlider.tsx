@@ -11,6 +11,16 @@ type ImageSliderProps = {
   transitionType?: 'slide' | 'fade'
 }
 
+/**
+ * ImageSlider Component
+ * 
+ * A high-performance, accessible image gallery component with AI integration.
+ * Supports sliding/fading transitions, auto-play with progress indication,
+ * and AI-powered image analysis with text-to-speech.
+ * 
+ * @param {ImageSliderProps} props - The component props
+ * @returns {JSX.Element} The rendered image slider
+ */
 export function ImageSlider({ images, transitionType = 'slide' }: ImageSliderProps) {
   const [imageIndex, setImageIndex] = useState(0)
   const [caption, setCaption] = useState<string | null>(null)

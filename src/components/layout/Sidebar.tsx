@@ -17,6 +17,13 @@ type SidebarProps = {
   isUploading: boolean
 }
 
+/**
+ * Sidebar Component
+ * Manages the user's collection of sliders and provides creation tools (AI generation and uploads).
+ * 
+ * @param {SidebarProps} props - Sidebar properties
+ * @returns {JSX.Element} The rendered sidebar
+ */
 export function Sidebar({
   sliders,
   isLoadingSliders,

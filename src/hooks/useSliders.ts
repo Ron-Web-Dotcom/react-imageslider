@@ -17,6 +17,15 @@ export type ImageData = {
   alt: string
 }
 
+/**
+ * useSliders Hook
+ * 
+ * Central custom hook for managing image slider data and AI operations.
+ * Handles authentication state, slider CRUD, AI image generation,
+ * and cloud storage uploads via the Blink SDK.
+ * 
+ * @returns {object} An object containing slider state and handler functions
+ */
 export function useSliders() {
   const [user, setUser] = useState<any>(null)
   const [isLoadingAuth, setIsLoadingAuth] = useState(true)

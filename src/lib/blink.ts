@@ -8,6 +8,10 @@ function getProjectId(): string {
   return match ? match[1] : 'image-slider-app-plfrmbrt'
 }
 
+/**
+ * Blink SDK Initialization
+ * Configures the project ID, publishable key, and authentication mode.
+ */
 export const blink = createClient({
   projectId: getProjectId(),
   publishableKey: import.meta.env.VITE_BLINK_PUBLISHABLE_KEY || 'blnk_pk_P3_q2bubijgmXk9GFwvtpCfic02oDymM',
