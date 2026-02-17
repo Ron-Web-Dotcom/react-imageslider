@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { ArrowBigLeft, ArrowBigRight, Sparkles, Loader2 } from "lucide-react"
+import { ArrowBigLeft, ArrowBigRight, Sparkles, Loader2, Play, Pause, Maximize } from "lucide-react"
 import { blink } from "./lib/blink"
 import "./image-slider.css"
 
@@ -14,11 +14,33 @@ export function ImageSlider({ images }: ImageSliderProps) {
   const [imageIndex, setImageIndex] = useState(0)
   const [caption, setCaption] = useState<string | null>(null)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
+  const [isAutoPlaying, setIsAutoPlaying] = useState(true)
+  const [progress, setProgress] = useState(0)
+  const autoPlayInterval = 5000 // 5 seconds
 
   // Clear caption when image changes
   useEffect(() => {
     setCaption(null)
+    setProgress(0)
   }, [imageIndex])
+
+  // Auto-play logic
+  useEffect(() => {
+    if (isAutoPlaying) {
+      const startTime = Date.now()
+      const interval = setInterval(() => {
+        const elapsed = Date.now() - startTime
+        const newProgress = Math.min((elapsed / autoPlayInterval) * 100, 100)
+        setProgress(newProgress)
+        
+        if (newProgress >= 100) {
+          showNextImage()
+        }
+      }, 50)
+      
+      return () => clearInterval(interval)
+    }
+  }, [isAutoPlaying, imageIndex])
 
   function showNextImage() {
     setImageIndex(index => {
@@ -63,6 +85,18 @@ export function ImageSlider({ images }: ImageSliderProps) {
     }
   }
 
+  const toggleFullScreen = () => {
+    const element = document.querySelector(".slider-container")
+    if (!element) return
+    if (!document.fullscreenElement) {
+      element.requestFullscreen().catch(err => {
+        console.error(`Error attempting to enable full-screen mode: ${err.message}`)
+      })
+    } else {
+      document.exitFullscreen()
+    }
+  }
+
   return (
     <section
       aria-label="Slick Pic Slider"
@@ -78,6 +112,16 @@ export function ImageSlider({ images }: ImageSliderProps) {
           <span className="ai-caption-text">
             {caption}
           </span>
+        </div>
+      )}
+
+      {/* Progress Bar */}
+      {isAutoPlaying && (
+        <div className="absolute top-0 left-0 w-full h-1 z-20 bg-white/10 overflow-hidden">
+          <div 
+            className="h-full bg-primary transition-all duration-100 ease-linear"
+            style={{ width: `${progress}%` }}
+          />
         </div>
       )}
 
@@ -111,19 +155,37 @@ export function ImageSlider({ images }: ImageSliderProps) {
         <ArrowBigRight />
       </button>
 
-      {/* AI Insight Button */}
-      <button
-        onClick={analyzeCurrentImg}
-        disabled={isAnalyzing}
-        className="absolute top-4 right-4 z-20 glass p-2 rounded-full text-white transition-smooth hover:scale-110 active:scale-95 disabled:opacity-50"
-        title="AI Insight"
-      >
-        {isAnalyzing ? (
-          <Loader2 className="w-5 h-5 animate-spin" />
-        ) : (
-          <Sparkles className="w-5 h-5" />
-        )}
-      </button>
+      {/* Bottom Bar Controls */}
+      <div className="absolute bottom-4 right-4 z-20 flex gap-2">
+        <button
+          onClick={toggleFullScreen}
+          className="glass p-2 rounded-full text-white transition-smooth hover:scale-110 active:scale-95"
+          title="Toggle Full Screen"
+        >
+          <Maximize className="w-4 h-4" />
+        </button>
+
+        <button
+          onClick={() => setIsAutoPlaying(!isAutoPlaying)}
+          className="glass p-2 rounded-full text-white transition-smooth hover:scale-110 active:scale-95"
+          title={isAutoPlaying ? "Pause Auto-play" : "Resume Auto-play"}
+        >
+          {isAutoPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+        </button>
+
+        <button
+          onClick={analyzeCurrentImg}
+          disabled={isAnalyzing}
+          className="glass p-2 rounded-full text-white transition-smooth hover:scale-110 active:scale-95 disabled:opacity-50"
+          title="AI Insight"
+        >
+          {isAnalyzing ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <Sparkles className="w-4 h-4" />
+          )}
+        </button>
+      </div>
 
       {/* Dots Navigation */}
       <div className="dots-container">

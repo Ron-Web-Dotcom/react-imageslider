@@ -24,6 +24,17 @@ export default function App() {
   const [isGenerating, setIsGenerating] = useState(false)
   const [activeSliderId, setActiveSliderId] = useState<string | null>(null)
   const [prompt, setPrompt] = useState("")
+  const [selectedStyle, setSelectedStyle] = useState("Cinematic")
+  const [isEditingName, setIsEditingName] = useState(false)
+  const [editingName, setEditingName] = useState("")
+
+  const styles = [
+    { name: "Cinematic", prompt: "Cinematic lighting, 4k, high resolution, minimalist aesthetic" },
+    { name: "Vintage", prompt: "Vintage film style, grainy texture, warm tones, 70s aesthetic" },
+    { name: "3D Render", prompt: "Octane render, 3D digital art, vibrant colors, futuristic" },
+    { name: "Oil Painting", prompt: "Impressionist oil painting, visible brushstrokes, rich textures" },
+    { name: "Noir", prompt: "Black and white photography, high contrast, dramatic shadows, moody" }
+  ]
 
   useEffect(() => {
     return blink.auth.onAuthStateChanged((state) => {
@@ -60,8 +71,9 @@ export default function App() {
 
     try {
       // 1. Generate images using AI
+      const currentStyle = styles.find(s => s.name === selectedStyle)?.prompt || styles[0].prompt
       const { data } = await blink.ai.generateImage({
-        prompt: `A professional photography series of: ${prompt}. Cinematic lighting, 4k, high resolution, minimalist aesthetic.`,
+        prompt: `A professional photography series of: ${prompt}. ${currentStyle}.`,
         n: 4,
         model: "fal-ai/nano-banana-pro",
         size: "1024x1024"
@@ -103,6 +115,21 @@ export default function App() {
       toast.success("Slider deleted")
     } catch (error) {
       toast.error("Failed to delete slider")
+    }
+  }
+
+  const handleUpdateName = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!activeSliderId || !editingName) return
+    try {
+      await blink.db.table("sliders").update(activeSliderId, {
+        name: editingName
+      })
+      setSliders(prev => prev.map(s => s.id === activeSliderId ? { ...s, name: editingName } : s))
+      setIsEditingName(false)
+      toast.success("Name updated")
+    } catch (error) {
+      toast.error("Failed to update name")
     }
   }
 
@@ -172,6 +199,29 @@ export default function App() {
               />
               <Wand2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             </div>
+
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                Artistic Style
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {styles.map((style) => (
+                  <button
+                    key={style.name}
+                    type="button"
+                    onClick={() => setSelectedStyle(style.name)}
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium transition-smooth ${
+                      selectedStyle === style.name
+                        ? "bg-primary text-primary-foreground shadow-md"
+                        : "bg-muted text-muted-foreground hover:bg-muted/80"
+                    }`}
+                  >
+                    {style.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <button
               type="submit"
               disabled={isGenerating || !prompt}
@@ -264,13 +314,37 @@ export default function App() {
         {activeSlider ? (
           <div className="max-w-5xl mx-auto space-y-8 animate-fade-in">
             <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-3xl font-bold tracking-tight">{activeSlider.name}</h2>
+              <div className="flex-1 min-w-0 mr-4">
+                {isEditingName ? (
+                  <form onSubmit={handleUpdateName} className="flex items-center gap-2">
+                    <input
+                      autoFocus
+                      type="text"
+                      className="text-3xl font-bold tracking-tight bg-transparent border-b border-primary outline-none w-full"
+                      value={editingName}
+                      onChange={(e) => setEditingName(e.target.value)}
+                      onBlur={() => setIsEditingName(false)}
+                    />
+                  </form>
+                ) : (
+                  <h2 
+                    className="text-3xl font-bold tracking-tight truncate cursor-pointer hover:text-primary transition-smooth"
+                    onClick={() => {
+                      setEditingName(activeSlider.name)
+                      setIsEditingName(true)
+                    }}
+                  >
+                    {activeSlider.name}
+                  </h2>
+                )}
                 <p className="text-muted-foreground">Preview your interactive AI-generated slider.</p>
               </div>
               <div className="flex gap-3">
                 <button 
-                  onClick={() => toast.info("Link copied to clipboard!")}
+                  onClick={() => {
+                    navigator.clipboard.writeText(window.location.href)
+                    toast.success("Link copied to clipboard!")
+                  }}
                   className="px-4 py-2 border rounded-xl hover:bg-muted transition-smooth flex items-center gap-2"
                 >
                   Share
@@ -286,8 +360,17 @@ export default function App() {
               {activeImages.map((img, i) => (
                 <div key={i} className="group relative aspect-square rounded-2xl overflow-hidden border">
                   <img src={img.url} alt={img.alt} className="w-full h-full object-cover group-hover:scale-110 transition-smooth" />
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-smooth flex items-center justify-center">
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-smooth flex flex-col items-center justify-center gap-2">
                     <span className="text-white text-xs font-bold uppercase tracking-wider">Image {i+1}</span>
+                    <a 
+                      href={img.url} 
+                      download 
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-3 py-1 bg-white/20 hover:bg-white/40 rounded-lg text-white text-[10px] font-bold backdrop-blur-sm transition-smooth"
+                    >
+                      Open Original
+                    </a>
                   </div>
                 </div>
               ))}
