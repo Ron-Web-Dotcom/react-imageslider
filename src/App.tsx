@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { Sparkles, Image as ImageIcon, Trash2, LogOut, Loader2, Wand2, Upload, Search, Apple, Chrome } from "lucide-react"
+import { Sparkles, Image as ImageIcon, Trash2, LogOut, Loader2, Wand2, Upload, Search } from "lucide-react"
 import { blink } from "./lib/blink"
 import { ImageSlider } from "./ImageSlider"
 import { toast, Toaster } from "sonner"
@@ -272,25 +272,12 @@ export default function App() {
               Generate stunning, interactive image sliders with AI. Showcase your vision with professional aesthetics and accessible navigation.
             </p>
           </div>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
-            <button
-              onClick={() => blink.auth.signInWithGoogle()}
-              className="flex items-center justify-center gap-3 px-8 py-4 bg-white text-slate-900 border border-slate-200 rounded-full font-bold text-lg hover:bg-slate-50 hover:scale-[1.02] transition-all shadow-sm active:scale-[0.98]"
-            >
-              <Chrome className="w-5 h-5 text-[#4285F4]" />
-              Continue with Google
-            </button>
-            <button
-              onClick={() => blink.auth.signInWithApple()}
-              className="flex items-center justify-center gap-3 px-8 py-4 bg-slate-950 text-white rounded-full font-bold text-lg hover:bg-slate-900 hover:scale-[1.02] transition-all shadow-md active:scale-[0.98]"
-            >
-              <Apple className="w-5 h-5 fill-white" />
-              Continue with Apple
-            </button>
-          </div>
-          <p className="text-sm text-muted-foreground pt-4">
-            Secure, passwordless authentication by <span className="font-semibold text-primary">Blink Auth</span>
-          </p>
+          <button
+            onClick={() => blink.auth.login()}
+            className="px-8 py-4 bg-primary text-primary-foreground rounded-full font-bold text-lg hover:scale-105 transition-smooth shadow-lg shadow-primary/20"
+          >
+            Get Started Free
+          </button>
         </div>
       </div>
     )
@@ -474,16 +461,16 @@ export default function App() {
         <div className="p-4 border-t mt-auto">
           <div className="flex items-center gap-3 p-3 rounded-xl bg-muted">
             <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold">
-              {user.displayName?.[0] || user.email[0].toUpperCase()}
+              {user.display_name?.[0] || user.email[0].toUpperCase()}
             </div>
             <div className="flex-1 min-w-0">
               <div className="text-sm font-bold truncate">
-                {user.displayName || "New Explorer"}
+                {user.display_name || "New Explorer"}
               </div>
               <div className="text-xs text-muted-foreground truncate">{user.email}</div>
             </div>
             <button
-              onClick={() => blink.auth.signOut()}
+              onClick={() => blink.auth.logout()}
               className="p-2 hover:bg-background rounded-lg transition-smooth"
               title="Logout"
             >
