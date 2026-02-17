@@ -8,9 +8,10 @@ type ImageSliderProps = {
     url: string
     alt: string
   }[]
+  transitionType?: 'slide' | 'fade'
 }
 
-export function ImageSlider({ images }: ImageSliderProps) {
+export function ImageSlider({ images, transitionType = 'slide' }: ImageSliderProps) {
   const [imageIndex, setImageIndex] = useState(0)
   const [caption, setCaption] = useState<string | null>(null)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
@@ -147,14 +148,18 @@ export function ImageSlider({ images }: ImageSliderProps) {
       )}
 
       {/* Main Slider Area */}
-      <div className="slider-inner" style={{ transform: `translateX(${-100 * imageIndex}%)` }}>
+      <div 
+        className={`slider-inner ${transitionType === 'fade' ? 'transition-fade' : ''}`} 
+        style={transitionType === 'slide' ? { transform: `translateX(${-100 * imageIndex}%)` } : {}}
+      >
         {images.map(({ url, alt }, index) => (
           <img
             key={`${url}-${index}`}
             src={url}
             alt={alt}
             aria-hidden={imageIndex !== index}
-            className="img-slider-img"
+            className={`img-slider-img ${transitionType === 'fade' ? (index === imageIndex ? 'opacity-100' : 'opacity-0') : ''}`}
+            style={transitionType === 'fade' ? { position: 'absolute', inset: 0 } : {}}
           />
         ))}
       </div>
