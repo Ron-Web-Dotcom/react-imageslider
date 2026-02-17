@@ -31,6 +31,10 @@ export default function App() {
   const [isEditingName, setIsEditingName] = useState(false)
   const [editingName, setEditingName] = useState("")
   const [isSearchOpen, setIsSearchOpen] = useState(false)
+  const [editingImageIndex, setEditingImageIndex] = useState<number | null>(null)
+  const [editPrompt, setEditPrompt] = useState("")
+  const [isEditingImage, setIsEditingImage] = useState(false)
+  const [isProcessingEdit, setIsProcessingEdit] = useState(false)
 
   const styles = [
     { name: "Cinematic", prompt: "Cinematic lighting, 4k, high resolution, minimalist aesthetic" },
@@ -172,6 +176,50 @@ export default function App() {
     }
   }
 
+  const handleEditImage = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (editingImageIndex === null || !activeSliderId || !editPrompt || isProcessingEdit) return
+    
+    setIsProcessingEdit(true)
+    const toastId = toast.loading("AI is reimagining your image...")
+    
+    try {
+      const activeSlider = sliders.find(s => s.id === activeSliderId)
+      if (!activeSlider) return
+      
+      const currentImages = JSON.parse(activeSlider.imagesJson) as ImageData[]
+      const targetImage = currentImages[editingImageIndex]
+      
+      const { data } = await blink.ai.modifyImage({
+        images: [targetImage.url],
+        prompt: editPrompt
+      })
+      
+      if (data?.[0]?.url) {
+        const newImages = [...currentImages]
+        newImages[editingImageIndex] = {
+          ...targetImage,
+          url: data[0].url
+        }
+        
+        await blink.db.table("sliders").update(activeSliderId, {
+          imagesJson: JSON.stringify(newImages)
+        })
+        
+        setSliders(prev => prev.map(s => s.id === activeSliderId ? { ...s, imagesJson: JSON.stringify(newImages) } : s))
+        setEditingImageIndex(null)
+        setEditPrompt("")
+        setIsEditingImage(false)
+        toast.success("Image transformed successfully!", { id: toastId })
+      }
+    } catch (error) {
+      console.error("Edit failed:", error)
+      toast.error("Failed to edit image. Try a different prompt.", { id: toastId })
+    } finally {
+      setIsProcessingEdit(false)
+    }
+  }
+
   const handleAddImage = async (url: string, alt: string) => {
     if (!activeSliderId) {
       toast.error("Please select a slider first")
@@ -239,6 +287,17 @@ export default function App() {
     <div className="flex h-screen bg-background overflow-hidden relative">
       <Toaster position="top-center" richColors />
       
+      {/* Dynamic Blurred Background */}
+      {activeSlider && activeImages.length > 0 && (
+        <div className="fixed inset-0 pointer-events-none -z-10 overflow-hidden">
+          <div 
+            className="absolute inset-0 bg-cover bg-center scale-110 transition-all duration-1000 blur-[80px] opacity-20"
+            style={{ backgroundImage: `url(${activeImages[0].url})` }}
+          />
+          <div className="absolute inset-0 bg-gradient-to-br from-background via-background/90 to-background/50" />
+        </div>
+      )}
+
       {/* AI Search Slide-over */}
       <div 
         className={cn(
@@ -275,7 +334,7 @@ export default function App() {
               Create New
             </label>
             <div className="grid grid-cols-2 gap-2">
-              <label className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl border-2 border-dashed border-muted-foreground/20 hover:border-primary/50 hover:bg-primary/5 transition-smooth cursor-pointer">
+              <label className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl border-2 border-dashed border-muted-foreground/20 hover:border-primary/50 hover:bg-primary/5 hover-scale transition-smooth cursor-pointer">
                 <Upload className="w-5 h-5 text-primary" />
                 <span className="text-[10px] font-bold uppercase tracking-wider">Upload</span>
                 <input 
@@ -289,7 +348,7 @@ export default function App() {
               </label>
               <button 
                 onClick={() => setIsSearchOpen(true)}
-                className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl border-2 border-dashed border-muted-foreground/20 hover:border-brand-search/50 hover:bg-brand-search/5 transition-smooth cursor-pointer group"
+                className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl border-2 border-dashed border-muted-foreground/20 hover:border-brand-search/50 hover:bg-brand-search/5 hover-scale transition-smooth cursor-pointer group"
               >
                 <Search className="w-5 h-5 text-brand-search" />
                 <span className="text-[10px] font-bold uppercase tracking-wider">AI Search</span>
@@ -470,7 +529,7 @@ export default function App() {
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {activeImages.map((img, i) => (
-                <div key={i} className="group relative aspect-square rounded-2xl overflow-hidden border">
+                <div key={i} className="group relative aspect-square rounded-2xl overflow-hidden border hover-lift">
                   <img src={img.url} alt={img.alt} className="w-full h-full object-cover group-hover:scale-110 transition-smooth" />
                   <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-smooth flex flex-col items-center justify-center gap-2">
                     <span className="text-white text-xs font-bold uppercase tracking-wider">Image {i+1}</span>
@@ -479,10 +538,20 @@ export default function App() {
                       download 
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="px-3 py-1 bg-white/20 hover:bg-white/40 rounded-lg text-white text-[10px] font-bold backdrop-blur-sm transition-smooth"
+                      className="px-3 py-1 bg-white/20 hover:bg-white/40 rounded-lg text-white text-[10px] font-bold backdrop-blur-sm transition-smooth hover-scale"
                     >
                       Open Original
                     </a>
+                    <button
+                      onClick={() => {
+                        setEditingImageIndex(i)
+                        setEditPrompt("")
+                        setIsEditingImage(true)
+                      }}
+                      className="px-3 py-1 bg-primary/20 hover:bg-primary/40 rounded-lg text-white text-[10px] font-bold backdrop-blur-sm transition-smooth hover-scale"
+                    >
+                      Edit with AI
+                    </button>
                   </div>
                 </div>
               ))}
@@ -500,6 +569,49 @@ export default function App() {
           </div>
         )}
       </main>
+
+      {/* Image Edit Modal */}
+      {isEditingImage && editingImageIndex !== null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-fade-in">
+          <div className="bg-card p-6 rounded-xl shadow-xl max-w-md w-full">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-bold">Edit Image</h3>
+              <button onClick={() => {
+                setIsEditingImage(false)
+                setEditingImageIndex(null)
+                setEditPrompt("")
+              }} className="text-muted-foreground hover:text-foreground transition-smooth">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+            <form onSubmit={handleEditImage} className="space-y-4">
+              <div className="relative">
+                <textarea
+                  rows={3}
+                  placeholder="Describe the changes you want..."
+                  className="w-full p-3 rounded-xl border bg-muted focus:ring-2 focus:ring-primary outline-none transition-smooth resize-none"
+                  value={editPrompt}
+                  onChange={(e) => setEditPrompt(e.target.value)}
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={isProcessingEdit || !editPrompt}
+                className="w-full py-3 bg-primary text-primary-foreground rounded-xl font-bold flex items-center justify-center gap-2 hover:opacity-90 transition-smooth disabled:opacity-50"
+              >
+                {isProcessingEdit ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <>
+                    <Wand2 className="w-4 h-4" />
+                    Transform Image
+                  </>
+                )}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
