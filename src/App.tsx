@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react"
-import { Sparkles, Image as ImageIcon, Trash2, LogOut, Loader2, Wand2, Upload } from "lucide-react"
+import { Sparkles, Image as ImageIcon, Trash2, LogOut, Loader2, Wand2, Upload, Search } from "lucide-react"
 import { blink } from "./lib/blink"
 import { ImageSlider } from "./ImageSlider"
 import { toast, Toaster } from "sonner"
+import { ChatInterface } from "./components/research/ChatInterface"
+import { cn } from "./lib/utils"
 
 type Slider = {
   id: string
@@ -28,6 +30,7 @@ export default function App() {
   const [selectedStyle, setSelectedStyle] = useState("Cinematic")
   const [isEditingName, setIsEditingName] = useState(false)
   const [editingName, setEditingName] = useState("")
+  const [isSearchOpen, setIsSearchOpen] = useState(false)
 
   const styles = [
     { name: "Cinematic", prompt: "Cinematic lighting, 4k, high resolution, minimalist aesthetic" },
@@ -169,6 +172,31 @@ export default function App() {
     }
   }
 
+  const handleAddImage = async (url: string, alt: string) => {
+    if (!activeSliderId) {
+      toast.error("Please select a slider first")
+      return
+    }
+
+    try {
+      const activeSlider = sliders.find(s => s.id === activeSliderId)
+      if (!activeSlider) return
+
+      const currentImages = JSON.parse(activeSlider.imagesJson) as ImageData[]
+      const newImages = [...currentImages, { url, alt }]
+
+      await blink.db.table("sliders").update(activeSliderId, {
+        imagesJson: JSON.stringify(newImages)
+      })
+
+      setSliders(prev => prev.map(s => s.id === activeSliderId ? { ...s, imagesJson: JSON.stringify(newImages) } : s))
+      toast.success("Image added to slider")
+    } catch (error) {
+      console.error("Failed to add image:", error)
+      toast.error("Failed to add image to slider")
+    }
+  }
+
   const activeSlider = sliders.find(s => s.id === activeSliderId)
   const activeImages: ImageData[] = activeSlider ? JSON.parse(activeSlider.imagesJson) : []
 
@@ -208,9 +236,30 @@ export default function App() {
   }
 
   return (
-    <div className="flex h-screen bg-background">
+    <div className="flex h-screen bg-background overflow-hidden relative">
       <Toaster position="top-center" richColors />
       
+      {/* AI Search Slide-over */}
+      <div 
+        className={cn(
+          "fixed inset-y-0 right-0 z-50 w-full sm:w-[500px] transform transition-transform duration-500 ease-in-out p-4",
+          isSearchOpen ? "translate-x-0" : "translate-x-full"
+        )}
+      >
+        <ChatInterface 
+          onAddImage={handleAddImage} 
+          onClose={() => setIsSearchOpen(false)} 
+        />
+      </div>
+
+      {/* Backdrop */}
+      {isSearchOpen && (
+        <div 
+          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 animate-fade-in"
+          onClick={() => setIsSearchOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
       <aside className="w-80 h-screen border-r bg-card flex flex-col">
         <div className="h-20 flex items-center px-6 border-b">
@@ -238,10 +287,13 @@ export default function App() {
                   disabled={isUploading}
                 />
               </label>
-              <div className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl border-2 border-dashed border-muted-foreground/20 bg-muted/30">
-                <Sparkles className="w-5 h-5 text-primary/50" />
-                <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">AI Gen</span>
-              </div>
+              <button 
+                onClick={() => setIsSearchOpen(true)}
+                className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl border-2 border-dashed border-muted-foreground/20 hover:border-brand-search/50 hover:bg-brand-search/5 transition-smooth cursor-pointer group"
+              >
+                <Search className="w-5 h-5 text-brand-search" />
+                <span className="text-[10px] font-bold uppercase tracking-wider">AI Search</span>
+              </button>
             </div>
           </div>
 

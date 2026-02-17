@@ -19,6 +19,13 @@ export function ImageSlider({ images }: ImageSliderProps) {
   const [progress, setProgress] = useState(0)
   const autoPlayInterval = 5000 // 5 seconds
 
+  // Handle new image added
+  useEffect(() => {
+    if (images.length > 0) {
+      setImageIndex(images.length - 1)
+    }
+  }, [images.length])
+
   // Clear caption when image changes
   useEffect(() => {
     setCaption(null)
