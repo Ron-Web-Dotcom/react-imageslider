@@ -1,117 +1,54 @@
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
+.slider-container {
+  @apply relative w-full h-full overflow-hidden rounded-[var(--radius)] shadow-premium bg-muted;
 }
-body {
-  margin: 0;
-  padding: 0;
-  background: #f0f0f0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-  font-family: 'Segoe UI', sans-serif;
-  background: linear-gradient(to right, #FF0000, #0000FF);
+
+.slider-inner {
+  @apply flex w-full h-full transition-transform duration-500 ease-out;
 }
+
 .img-slider-img {
-  object-fit: cover;
-  width: 100%;
-  height: 100%;
-  display: block;
-  flex-shrink: 0;
-  flex-grow: 0;
- 
+  @apply w-full h-full object-cover flex-shrink-0 flex-grow-0;
 }
 
 .img-slider-btn {
-  all: unset;
-  display: block;
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  padding: 1rem;
-  cursor: pointer;
-  transition: background-color 100ms ease-in-out;
+  @apply absolute top-0 bottom-0 px-4 flex items-center justify-center cursor-pointer transition-smooth z-10;
+  @apply hover:bg-black/10 focus-visible:bg-black/20 text-white;
 }
 
-.img-slider-btn:hover,
-.img-slider-btn:focus-visible {
-  background-color: rgb(0, 0, 0, 0.2);
+.img-slider-btn > svg {
+  @apply w-10 h-10 drop-shadow-md;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
 }
 
-.img-slider-btn > * {
-  stroke: rgb(202, 22, 22);
-  fill: black;
-  width: 2rem;
-  height: 2rem;
+.img-slider-btn:hover > svg {
+  @apply scale-110 transition-smooth;
 }
 
-@keyframes squish {
-  50% {
-    scale: 1.4 0.6;
-  }
+.img-slider-btn:active > svg {
+  @apply scale-95;
+}
+
+.dots-container {
+  @apply absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2 z-10 glass px-3 py-2 rounded-full;
 }
 
 .img-slider-dot-btn {
-  all: unset;
-  display: block;
-  cursor: pointer;
-  width: 1rem;
-  height: 1rem;
-  transition: scale 100ms ease-in-out;
+  @apply w-3 h-3 rounded-full bg-white/50 transition-smooth hover:bg-white/80 focus-visible:ring-2 focus-visible:ring-primary;
 }
 
-.img-slider-dot-btn:hover,
-.img-slider-dot-btn:focus-visible {
-  scale: 1.2;
-}
-
-.img-slider-dot-btn > * {
-  stroke: white;
-  fill: black;
-  height: 100%;
-  width: 100%;
-}
-
-.img-slider-dot-btn:focus-visible,
-.img-slider-btn:focus-visible {
-  outline: auto;
+.img-slider-dot-btn.active {
+  @apply bg-white w-6;
 }
 
 .skip-link {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  border: 0;
-  clip: rect(0, 0, 0, 0);
+  @apply sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:bg-white focus:text-black focus:px-4 focus:py-2 focus:rounded-md;
 }
 
-.skip-link:focus-visible {
-  top: 0;
-  left: 0;
-  border: 1px solid black;
-  background-color: white;
-  padding: 0.5rem;
-  width: auto;
-  height: auto;
-  margin: 0;
-  clip: unset;
-  text-decoration: none;
-  color: black;
-  z-index: 100;
+/* AI Overlay */
+.ai-caption {
+  @apply absolute top-4 left-4 right-4 text-center z-10;
 }
 
-@media not (prefers-reduced-motion) {
-  .img-slider-img {
-    transition: translate 300ms ease-in-out;
-  }
-
-  .img-slider-btn:hover > *,
-  .img-slider-btn:focus-visible > * {
-    animation: squish 200ms ease-in-out;
-  }
+.ai-caption-text {
+  @apply glass text-foreground px-4 py-2 rounded-full text-sm font-medium animate-fade-in;
 }

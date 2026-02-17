@@ -1,0 +1,111 @@
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=Geist+Mono:wght@100..900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 180 20% 98%;
+    --foreground: 180 50% 10%;
+    
+    --card: 0 0% 100%;
+    --card-foreground: 180 50% 10%;
+    
+    --popover: 0 0% 100%;
+    --popover-foreground: 180 50% 10%;
+    
+    --primary: 174 75% 31%; /* #0D9488 */
+    --primary-foreground: 0 0% 100%;
+    
+    --secondary: 174 80% 96%; /* #F0FDFA */
+    --secondary-foreground: 174 60% 19%; /* #134E4A */
+    
+    --muted: 174 20% 94%;
+    --muted-foreground: 174 30% 40%;
+    
+    --accent: 174 64% 50%; /* #2DD4BF */
+    --accent-foreground: 180 50% 10%;
+    
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    
+    --border: 174 30% 90%;
+    --input: 174 30% 90%;
+    --ring: 174 75% 31%;
+    
+    --radius: 0.75rem;
+
+    --font-sans: 'Geist', sans-serif;
+    --font-mono: 'Geist Mono', monospace;
+  }
+
+  .dark {
+    --background: 180 50% 5%;
+    --foreground: 180 10% 98%;
+    
+    --card: 180 50% 8%;
+    --card-foreground: 180 10% 98%;
+    
+    --popover: 180 50% 8%;
+    --popover-foreground: 180 10% 98%;
+    
+    --primary: 174 75% 45%;
+    --primary-foreground: 180 50% 5%;
+    
+    --secondary: 180 40% 15%;
+    --secondary-foreground: 174 80% 96%;
+    
+    --muted: 180 40% 12%;
+    --muted-foreground: 180 10% 65%;
+    
+    --accent: 174 64% 50%;
+    --accent-foreground: 180 50% 5%;
+    
+    --destructive: 0 62% 30%;
+    --destructive-foreground: 0 0% 100%;
+    
+    --border: 180 40% 15%;
+    --input: 180 40% 15%;
+    --ring: 174 75% 45%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-sans);
+  }
+}
+
+@layer components {
+  .glass {
+    @apply backdrop-blur-md bg-white/30 border border-white/20;
+  }
+
+  .shadow-premium {
+    box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.1);
+  }
+
+  .transition-smooth {
+    @apply transition-all duration-300 ease-in-out;
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
