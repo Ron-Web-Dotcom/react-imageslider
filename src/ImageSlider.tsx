@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { ArrowBigLeft, ArrowBigRight, Sparkles, Loader2, Play, Pause, Maximize } from "lucide-react"
+import { ArrowBigLeft, ArrowBigRight, Sparkles, Loader2, Play, Pause, Maximize, Volume2 } from "lucide-react"
 import { blink } from "./lib/blink"
 import "./image-slider.css"
 
@@ -14,6 +14,7 @@ export function ImageSlider({ images }: ImageSliderProps) {
   const [imageIndex, setImageIndex] = useState(0)
   const [caption, setCaption] = useState<string | null>(null)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
+  const [isSpeaking, setIsSpeaking] = useState(false)
   const [isAutoPlaying, setIsAutoPlaying] = useState(true)
   const [progress, setProgress] = useState(0)
   const autoPlayInterval = 5000 // 5 seconds
@@ -22,6 +23,7 @@ export function ImageSlider({ images }: ImageSliderProps) {
   useEffect(() => {
     setCaption(null)
     setProgress(0)
+    setIsSpeaking(false)
   }, [imageIndex])
 
   // Auto-play logic
@@ -77,11 +79,30 @@ export function ImageSlider({ images }: ImageSliderProps) {
         ]
       })
       setCaption(text)
+      // Auto speak if caption generated
+      speakText(text)
     } catch (error) {
       console.error("AI Analysis failed:", error)
       setCaption("Beautifully captured moment.")
     } finally {
       setIsAnalyzing(false)
+    }
+  }
+
+  const speakText = async (text: string) => {
+    if (isSpeaking || !text) return
+    setIsSpeaking(true)
+    try {
+      const { url } = await blink.ai.generateSpeech({
+        text,
+        voice: "nova"
+      })
+      const audio = new Audio(url)
+      audio.onended = () => setIsSpeaking(false)
+      await audio.play()
+    } catch (error) {
+      console.error("Speech generation failed:", error)
+      setIsSpeaking(false)
     }
   }
 
@@ -185,6 +206,21 @@ export function ImageSlider({ images }: ImageSliderProps) {
             <Sparkles className="w-4 h-4" />
           )}
         </button>
+
+        {caption && (
+          <button
+            onClick={() => speakText(caption)}
+            disabled={isSpeaking}
+            className={`glass p-2 rounded-full text-white transition-smooth hover:scale-110 active:scale-95 disabled:opacity-50 ${isSpeaking ? 'animate-pulse' : ''}`}
+            title="Listen to Insight"
+          >
+            {isSpeaking ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Volume2 className="w-4 h-4" />
+            )}
+          </button>
+        )}
       </div>
 
       {/* Dots Navigation */}

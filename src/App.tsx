@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { Sparkles, Image as ImageIcon, Trash2, LogOut, Loader2, Wand2 } from "lucide-react"
+import { Sparkles, Image as ImageIcon, Trash2, LogOut, Loader2, Wand2, Upload } from "lucide-react"
 import { blink } from "./lib/blink"
 import { ImageSlider } from "./ImageSlider"
 import { toast, Toaster } from "sonner"
@@ -22,6 +22,7 @@ export default function App() {
   const [sliders, setSliders] = useState<Slider[]>([])
   const [isLoadingSliders, setIsLoadingSliders] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
+  const [isUploading, setIsUploading] = useState(false)
   const [activeSliderId, setActiveSliderId] = useState<string | null>(null)
   const [prompt, setPrompt] = useState("")
   const [selectedStyle, setSelectedStyle] = useState("Cinematic")
@@ -100,6 +101,41 @@ export default function App() {
       toast.error("Failed to generate slider. Please try again.", { id: toastId })
     } finally {
       setIsGenerating(false)
+    }
+  }
+
+  const handleUploadImages = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files
+    if (!files || files.length === 0) return
+    
+    setIsUploading(true)
+    const toastId = toast.loading(`Uploading ${files.length} images...`)
+    
+    try {
+      const uploadPromises = Array.from(files).map(file => 
+        blink.storage.upload(file, `uploads/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.]/g, '_')}`)
+      )
+      const results = await Promise.all(uploadPromises)
+      
+      const newImages: ImageData[] = results.map((res: any, i) => ({
+        url: res.publicUrl,
+        alt: `Uploaded image ${i + 1}`
+      }))
+
+      const newSlider = await blink.db.table("sliders").create({
+        userId: user.id,
+        name: `Gallery ${new Date().toLocaleDateString()}`,
+        imagesJson: JSON.stringify(newImages)
+      }) as Slider
+
+      setSliders(prev => [newSlider, ...prev])
+      setActiveSliderId(newSlider.id)
+      toast.success("Slider created from uploads!", { id: toastId })
+    } catch (error) {
+      console.error("Upload failed:", error)
+      toast.error("Failed to upload images.", { id: toastId })
+    } finally {
+      setIsUploading(false)
     }
   }
 
@@ -185,7 +221,31 @@ export default function App() {
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 space-y-6">
-          <form onSubmit={handleGenerateSlider} className="space-y-3">
+          <div className="space-y-3">
+            <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+              Create New
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              <label className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl border-2 border-dashed border-muted-foreground/20 hover:border-primary/50 hover:bg-primary/5 transition-smooth cursor-pointer">
+                <Upload className="w-5 h-5 text-primary" />
+                <span className="text-[10px] font-bold uppercase tracking-wider">Upload</span>
+                <input 
+                  type="file" 
+                  multiple 
+                  accept="image/*" 
+                  className="hidden" 
+                  onChange={handleUploadImages}
+                  disabled={isUploading}
+                />
+              </label>
+              <div className="flex flex-col items-center justify-center gap-2 p-4 rounded-xl border-2 border-dashed border-muted-foreground/20 bg-muted/30">
+                <Sparkles className="w-5 h-5 text-primary/50" />
+                <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">AI Gen</span>
+              </div>
+            </div>
+          </div>
+
+          <form onSubmit={handleGenerateSlider} className="space-y-3 pt-2 border-t">
             <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
               Magic Generator
             </label>
