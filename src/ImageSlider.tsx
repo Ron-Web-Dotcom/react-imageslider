@@ -1,7 +1,6 @@
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect } from "react"
 import { ArrowBigLeft, ArrowBigRight, Sparkles, Loader2, Play, Pause, Maximize, Volume2 } from "lucide-react"
 import { blink } from "./lib/blink"
-import gsap from "gsap"
 import "./image-slider.css"
 
 type ImageSliderProps = {
@@ -18,39 +17,7 @@ export function ImageSlider({ images }: ImageSliderProps) {
   const [isSpeaking, setIsSpeaking] = useState(false)
   const [isAutoPlaying, setIsAutoPlaying] = useState(true)
   const [progress, setProgress] = useState(0)
-  const sliderRef = useRef<HTMLDivElement>(null)
   const autoPlayInterval = 5000 // 5 seconds
-
-  // Handle slide transition with GSAP
-  useEffect(() => {
-    if (sliderRef.current) {
-      gsap.to(sliderRef.current, {
-        xPercent: -100 * imageIndex,
-        duration: 0.8,
-        ease: "power2.inOut"
-      })
-      
-      // Ken Burns effect on current image
-      const imgs = sliderRef.current.querySelectorAll('.img-slider-img')
-      imgs.forEach((img, i) => {
-        if (i === imageIndex) {
-          gsap.fromTo(img, 
-            { scale: 1 }, 
-            { scale: 1.1, duration: autoPlayInterval / 1000, ease: "none" }
-          )
-        } else {
-          gsap.set(img, { scale: 1 })
-        }
-      })
-    }
-  }, [imageIndex])
-
-  // Handle new image added
-  useEffect(() => {
-    if (images.length > 0) {
-      setImageIndex(images.length - 1)
-    }
-  }, [images.length])
 
   // Clear caption when image changes
   useEffect(() => {
@@ -180,10 +147,7 @@ export function ImageSlider({ images }: ImageSliderProps) {
       )}
 
       {/* Main Slider Area */}
-      <div 
-        ref={sliderRef}
-        className="slider-inner" 
-      >
+      <div className="slider-inner" style={{ transform: `translateX(${-100 * imageIndex}%)` }}>
         {images.map(({ url, alt }, index) => (
           <img
             key={`${url}-${index}`}
